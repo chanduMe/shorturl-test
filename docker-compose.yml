@@ -1,0 +1,41 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: shorturl
+      POSTGRES_PASSWORD: shorturl
+      POSTGRES_DB: shorturl
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U shorturl"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Redis is used as the shared cache in production-like setups.
+  # Start with: docker-compose --profile prod up -d
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    profiles: ["prod"]
+
+  api:
+    build: .
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+asyncpg://shorturl:shorturl@postgres:5432/shorturl
+      CACHE_BACKEND: redis
+      REDIS_URL: redis://redis:6379/0
+      BASE_URL: http://localhost:8000
+    ports:
+      - "8000:8000"
+    profiles: ["prod"]
+
+volumes:
+  pgdata:
