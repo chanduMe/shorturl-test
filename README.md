@@ -125,6 +125,23 @@ This runs the API under `gunicorn` with `uvicorn` workers and uses Redis as the
 shared cache (`CACHE_BACKEND=redis`), so the cache works correctly across
 multiple instances.
 
+### Container image
+
+On push to `main` (and on `v*` tags), GitHub Actions builds the Dockerfile and
+pushes to GitHub Container Registry:
+
+```bash
+docker pull ghcr.io/chandume/shorturl-test:latest
+docker run --rm -p 8000:8000 \
+  -e DATABASE_URL=postgresql+asyncpg://user:pass@host:5432/shorturl \
+  -e BASE_URL=https://your.domain \
+  ghcr.io/chandume/shorturl-test:latest
+```
+
+After the first successful workflow run, the package appears under the repo’s
+**Packages**. Set the package visibility to **Public** (or grant access) if
+others need to pull it.
+
 ### Notes / next steps
 
 - **Schema management**: tables are auto-created on startup for now. Before
